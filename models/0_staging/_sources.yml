@@ -1,0 +1,108 @@
+version: 2
+
+sources:
+  - name: jpmc_secserv_workshop
+    description: Raw JPMorgan SecServ workshop feeds landed in the source layer for reference and position event processing.
+    database: jpmc_cib_demo
+    schema: jpmc_secserv_source
+    tables:
+      - name: jpmc_cib_secserv_trade_position_events_raw
+        description: Raw trade and position event records from the SecServ source feed before staging standardization.
+        columns:
+          - name: event_id
+            description: Unique identifier for the raw trade or position event record.
+            data_tests:
+              - not_null
+              - unique
+
+          - name: event_ts_utc
+            description: UTC timestamp when the event was recorded by the source system.
+            data_tests:
+              - not_null
+
+          - name: as_of_date
+            description: Business-effective date for the raw event record.
+            data_tests:
+              - not_null
+
+          - name: portfolio_id
+            description: Portfolio identifier supplied by the source system.
+            data_tests:
+              - not_null
+
+          - name: instrument_id
+            description: Raw instrument identifier carried on the event record.
+            data_tests:
+              - not_null
+
+          - name: position_status
+            description: Position lifecycle status supplied by the source feed.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values:
+                      - OPEN
+                      - CLOSED
+                      - PENDING_SETTLEMENT
+                    quote: true
+
+          - name: reconciliation_status
+            description: Reconciliation status supplied by the source feed.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values:
+                      - MATCHED
+                      - PENDING
+                      - UNMATCHED
+                    quote: true
+
+          - name: is_cancelled
+            description: Y or N flag indicating whether the raw event was cancelled upstream.
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values:
+                      - Y
+                      - N
+                    quote: true
+
+          - name: ingest_batch_id
+            description: Identifier for the raw ingestion batch.
+            data_tests:
+              - not_null
+
+      - name: jpmc_cib_secserv_instrument_reference_raw
+        description: Raw instrument reference records used to standardize instrument attributes in staging.
+        columns:
+          - name: instrument_id
+            description: Stable identifier for the raw instrument reference record.
+            data_tests:
+              - not_null
+              - unique
+
+          - name: instrument_type
+            description: Security type classification from the source reference feed.
+            data_tests:
+              - not_null
+
+          - name: asset_class
+            description: Top-level asset class classification from the source reference feed.
+            data_tests:
+              - not_null
+
+          - name: security_identifier_normalized
+            description: Normalized external security identifier supplied in the raw reference feed.
+            data_tests:
+              - not_null
+
+          - name: reference_status
+            description: Status of the raw instrument reference record.
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values:
+                      - ACTIVE
+                      - WATCHLIST
+                    quote: true

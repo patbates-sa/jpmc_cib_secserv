@@ -1,0 +1,151 @@
+version: 2
+
+models:
+  - name: stg_trade_position_events
+    description: Standardized trade and position event records from the SecServ raw position event feed.
+    config:
+      materialized: view
+    columns:
+      - name: event_id
+        description: Unique identifier for the trade or position event record.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: source_system
+        description: Upstream platform that produced the raw event record.
+
+      - name: source_record_id
+        description: Record identifier from the upstream source system.
+
+      - name: source_row_version
+        description: Version number for the source record as supplied by the upstream system.
+
+      - name: event_ts_utc
+        description: UTC timestamp when the event was recorded.
+        data_tests:
+          - not_null
+
+      - name: as_of_date
+        description: Business-effective date for the position snapshot or event.
+        data_tests:
+          - not_null
+
+      - name: portfolio_id
+        description: Identifier for the portfolio holding the position at the time of the event.
+        data_tests:
+          - not_null
+
+      - name: fund_id
+        description: Identifier for the fund associated with the event.
+
+      - name: fund_name
+        description: Descriptive name of the fund associated with the event.
+
+      - name: strategy
+        description: Investment strategy associated with the position or trade.
+
+      - name: account_id
+        description: Identifier for the account associated with the event.
+
+      - name: instrument_id
+        description: Instrument identifier carried on the event record.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_instrument_reference')
+                field: instrument_id
+
+      - name: instrument_type
+        description: Security type classification copied onto the event record.
+
+      - name: asset_class
+        description: Top-level asset class classification copied onto the event record.
+
+      - name: identifier_type
+        description: Type of security identifier supplied on the event record.
+
+      - name: security_identifier
+        description: Security identifier value supplied by the upstream system.
+
+      - name: issuer_name
+        description: Issuer name associated with the instrument on the event record.
+
+      - name: trade_currency
+        description: Currency in which the trade was executed.
+
+      - name: base_currency
+        description: Base reporting currency used for translated amounts.
+
+      - name: quantity
+        description: Position or trade quantity associated with the event.
+
+      - name: unit_price
+        description: Per-unit price recorded for the instrument.
+
+      - name: notional_amount
+        description: Notional amount associated with the trade or position event.
+
+      - name: market_value
+        description: Market value of the position at the event date.
+
+      - name: cost_basis
+        description: Cost basis carried for the position.
+
+      - name: unrealized_pnl
+        description: Unrealized profit and loss associated with the position.
+
+      - name: trade_date
+        description: Trade execution date for the event record.
+
+      - name: settlement_date
+        description: Expected or actual settlement date for the trade.
+
+      - name: counterparty_id
+        description: Identifier for the counterparty on the trade or position event.
+
+      - name: counterparty_name
+        description: Descriptive name of the counterparty on the event.
+
+      - name: custodian
+        description: Custodian responsible for safekeeping the position.
+
+      - name: position_status
+        description: Lifecycle status of the position represented by the event.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - OPEN
+                  - CLOSED
+                  - PENDING_SETTLEMENT
+                quote: true
+
+      - name: reconciliation_status
+        description: Reconciliation state for the event or resulting position.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - MATCHED
+                  - PENDING
+                  - UNMATCHED
+                quote: true
+
+      - name: is_cancelled
+        description: Y or N flag indicating whether the event was cancelled upstream.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - Y
+                  - N
+                quote: true
+
+      - name: ingest_batch_id
+        description: Identifier for the ingestion batch that loaded the raw event record.
+        data_tests:
+          - not_null

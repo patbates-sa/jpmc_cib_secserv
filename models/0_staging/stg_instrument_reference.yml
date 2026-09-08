@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: stg_instrument_reference
+    description: Canonical instrument reference attributes standardized from the SecServ raw instrument reference feed.
+    config:
+      materialized: view
+    columns:
+      - name: instrument_id
+        description: Stable identifier for the instrument in the SecServ feed.
+        data_tests:
+          - not_null
+          - unique
+
+      - name: instrument_type
+        description: Security type classification for the instrument.
+        data_tests:
+          - not_null
+
+      - name: asset_class
+        description: Top-level asset class classification for the instrument.
+        data_tests:
+          - not_null
+
+      - name: identifier_type
+        description: Type of external security identifier provided for the instrument.
+
+      - name: security_identifier_normalized
+        description: Normalized external security identifier used for matching across systems.
+        data_tests:
+          - not_null
+
+      - name: issuer_name
+        description: Name of the legal issuer associated with the instrument.
+
+      - name: instrument_currency
+        description: Native currency of the instrument reference record.
+
+      - name: reference_status
+        description: Current status of the instrument reference record.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - ACTIVE
+                  - WATCHLIST
+                quote: true
