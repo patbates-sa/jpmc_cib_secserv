@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: metricflow_time_spine
+    description: Daily time spine used by the dbt Semantic Layer for time-based joins and metric aggregation.
+    config:
+      materialized: table
+      file_format: delta
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        description: Calendar date at daily grain for MetricFlow joins.
+        granularity: day
