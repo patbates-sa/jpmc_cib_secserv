@@ -20,6 +20,8 @@ models:
 
       - name: source_row_version
         description: Version number for the source record as supplied by the upstream system.
+        data_tests:
+          - not_null
 
       - name: event_ts_utc
         description: UTC timestamp when the event was recorded.
@@ -80,12 +82,18 @@ models:
 
       - name: quantity
         description: Position or trade quantity associated with the event.
+        data_tests:
+          - not_null
 
       - name: unit_price
         description: Per-unit price recorded for the instrument.
+        data_tests:
+          - not_null
 
       - name: notional_amount
         description: Notional amount associated with the trade or position event.
+        data_tests:
+          - not_null
 
       - name: market_value
         description: Market value of the position at the event date.
@@ -98,6 +106,8 @@ models:
 
       - name: trade_date
         description: Trade execution date for the event record.
+        data_tests:
+          - not_null
 
       - name: settlement_date
         description: Expected or actual settlement date for the trade.
@@ -136,14 +146,15 @@ models:
                 quote: true
 
       - name: is_cancelled
-        description: Y or N flag indicating whether the event was cancelled upstream.
+        description: Boolean flag indicating whether the event was cancelled upstream.
         data_tests:
+          - not_null
           - accepted_values:
               arguments:
                 values:
-                  - Y
-                  - N
-                quote: true
+                  - true
+                  - false
+                quote: false
 
       - name: ingest_batch_id
         description: Identifier for the ingestion batch that loaded the raw event record.
