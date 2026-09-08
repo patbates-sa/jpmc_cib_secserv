@@ -25,3 +25,14 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "dbt_packages"
 
 
+
+models:
+  jpmc_cib_secserv:
+    +persist_docs:
+      relation: true
+      columns: true
+    0_staging:
+      +databricks_tags:
+        domain: secserv
+        layer: staging
+
