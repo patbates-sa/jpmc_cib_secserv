@@ -1,0 +1,439 @@
+version: 2
+
+models:
+  - name: fct_position_holdings
+    description: Latest non-cancelled position records enriched with canonical instrument reference attributes for downstream portfolio and reconciliation reporting.
+    config:
+      materialized: table
+      file_format: delta
+
+    semantic_model:
+      enabled: true
+      name: position_holdings
+      group: secserv
+
+    agg_time_dimension: as_of_date
+
+    columns:
+      - name: position_record_key
+        description: Deterministic key for the latest surviving source record after versioning and cancellation filters are applied.
+        data_tests:
+          - not_null
+          - unique
+        entity:
+          type: primary
+          name: position_record
+
+      - name: as_of_date
+        description: Business-effective date for the reported position record.
+        data_tests:
+          - not_null
+        granularity: day
+        dimension:
+          type: time
+          name: as_of_date
+
+      - name: event_ts_utc
+        description: UTC timestamp of the latest event retained for the source record.
+        data_tests:
+          - not_null
+
+      - name: event_id
+        description: Event identifier for the latest retained source record.
+
+      - name: source_system
+        description: Upstream platform that produced the retained source record.
+        dimension:
+          type: categorical
+          name: source_system
+
+      - name: source_record_id
+        description: Upstream source record identifier retained after versioning logic is applied.
+
+      - name: source_row_version
+        description: Source record version retained for reporting.
+
+      - name: portfolio_id
+        description: Portfolio holding the reported position.
+        data_tests:
+          - not_null
+        entity:
+          type: foreign
+          name: portfolio
+
+      - name: fund_id
+        description: Fund identifier associated with the reported position.
+        entity:
+          type: foreign
+          name: fund
+
+      - name: fund_name
+        description: Fund name associated with the reported position.
+        dimension:
+          type: categorical
+          name: fund_name
+
+      - name: strategy
+        description: Investment strategy associated with the reported position.
+        dimension:
+          type: categorical
+          name: strategy
+
+      - name: account_id
+        description: Account holding the reported position.
+        data_tests:
+          - not_null
+        entity:
+          type: foreign
+          name: account
+
+      - name: instrument_id
+        description: Instrument identifier for the reported position.
+        data_tests:
+          - not_null
+        entity:
+          type: foreign
+          name: instrument
+
+      - name: instrument_type
+        description: Canonical instrument type used for reporting, preferring instrument reference attributes when available.
+        dimension:
+          type: categorical
+          name: instrument_type
+
+      - name: asset_class
+        description: Canonical asset class used for reporting, preferring instrument reference attributes when available.
+        dimension:
+          type: categorical
+          name: asset_class
+
+      - name: identifier_type
+        description: External security identifier type used for the retained position row.
+        dimension:
+          type: categorical
+          name: identifier_type
+
+      - name: security_identifier
+        description: Canonical external security identifier, normalized from instrument reference when available.
+
+      - name: issuer_name
+        description: Issuer name used for the retained position row.
+        dimension:
+          type: categorical
+          name: issuer_name
+
+      - name: trade_currency
+        description: Trade currency associated with the reported position.
+        dimension:
+          type: categorical
+          name: trade_currency
+
+      - name: instrument_currency
+        description: Native currency from the matched instrument reference record.
+        dimension:
+          type: categorical
+          name: instrument_currency
+
+      - name: base_currency
+        description: Base reporting currency for translated amounts.
+        dimension:
+          type: categorical
+          name: base_currency
+
+      - name: quantity
+        description: Quantity associated with the retained position row.
+
+      - name: unit_price
+        description: Per-unit price recorded for the retained position row.
+
+      - name: notional_amount
+        description: Notional amount associated with the retained position row.
+
+      - name: market_value
+        description: Reported market value for the position snapshot.
+        data_tests:
+          - not_null
+
+      - name: cost_basis
+        description: Cost basis associated with the retained position row.
+
+      - name: unrealized_pnl
+        description: Unrealized profit and loss reported for the position.
+
+      - name: unrealized_pnl_pct
+        description: Unrealized profit and loss divided by cost basis when cost basis is non-zero.
+
+      - name: trade_date
+        description: Trade date associated with the retained position row.
+        granularity: day
+        dimension:
+          type: time
+          name: trade_date
+
+      - name: settlement_date
+        description: Settlement date associated with the retained position row.
+        granularity: day
+        dimension:
+          type: time
+          name: settlement_date
+
+      - name: settlement_lag_days
+        description: Number of calendar days between trade date and settlement date.
+
+      - name: position_age_days
+        description: Number of calendar days between trade date and the as-of date.
+
+      - name: counterparty_id
+        description: Counterparty identifier associated with the reported position.
+        entity:
+          type: foreign
+          name: counterparty
+
+      - name: counterparty_name
+        description: Counterparty name associated with the reported position.
+        dimension:
+          type: categorical
+          name: counterparty_name
+
+      - name: custodian
+        description: Custodian responsible for the reported position.
+        dimension:
+          type: categorical
+          name: custodian
+
+      - name: position_status
+        description: Lifecycle status of the reported position.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - OPEN
+                  - CLOSED
+                  - PENDING_SETTLEMENT
+                quote: true
+        dimension:
+          type: categorical
+          name: position_status
+
+      - name: reconciliation_status
+        description: Reconciliation state of the reported position.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - MATCHED
+                  - PENDING
+                  - UNMATCHED
+                quote: true
+        dimension:
+          type: categorical
+          name: reconciliation_status
+
+      - name: reference_status
+        description: Status of the joined instrument reference record.
+        dimension:
+          type: categorical
+          name: reference_status
+
+      - name: has_reference_match
+        description: Boolean flag indicating whether the position matched an instrument reference row.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+        dimension:
+          type: categorical
+          name: has_reference_match
+
+      - name: is_open_position
+        description: Boolean flag indicating whether the reported position is currently open.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+        dimension:
+          type: categorical
+          name: is_open_position
+
+      - name: is_reconciliation_break
+        description: Boolean flag indicating whether the position still requires reconciliation attention.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - true
+                  - false
+                quote: false
+        dimension:
+          type: categorical
+          name: is_reconciliation_break
+
+      - name: ingest_batch_id
+        description: Ingestion batch identifier for the retained position row.
+
+    metrics:
+      - name: position_count
+        description: Count of current non-cancelled position rows available for reporting.
+        label: Position Count
+        type: simple
+        agg: count
+        expr: 1
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: open_position_count
+        description: Count of current positions whose lifecycle status is open.
+        label: Open Position Count
+        type: simple
+        agg: sum_boolean
+        expr: is_open_position
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: reconciliation_break_count
+        description: Count of current positions that remain pending or unmatched in reconciliation.
+        label: Reconciliation Break Count
+        type: simple
+        agg: sum_boolean
+        expr: is_reconciliation_break
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: matched_reference_position_count
+        description: Count of current positions that matched a canonical instrument reference record.
+        label: Matched Reference Position Count
+        type: simple
+        agg: sum_boolean
+        expr: has_reference_match
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: total_market_value
+        description: Sum of market value across current reported positions.
+        label: Total Market Value
+        type: simple
+        agg: sum
+        expr: market_value
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: total_notional_amount
+        description: Sum of notional amount across current reported positions.
+        label: Total Notional Amount
+        type: simple
+        agg: sum
+        expr: notional_amount
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: total_cost_basis
+        description: Sum of cost basis across current reported positions.
+        label: Total Cost Basis
+        type: simple
+        agg: sum
+        expr: cost_basis
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: total_unrealized_pnl
+        description: Sum of unrealized profit and loss across current reported positions.
+        label: Total Unrealized P&L
+        type: simple
+        agg: sum
+        expr: unrealized_pnl
+        fill_nulls_with: 0
+        join_to_timespine: true
+
+      - name: average_position_age_days
+        description: Average age in days of current reported positions relative to trade date.
+        label: Average Position Age Days
+        type: simple
+        agg: average
+        expr: position_age_days
+
+      - name: average_settlement_lag_days
+        description: Average number of days between trade date and settlement date.
+        label: Average Settlement Lag Days
+        type: simple
+        agg: average
+        expr: settlement_lag_days
+
+      - name: average_unrealized_pnl_pct
+        description: Average unrealized P&L percentage across current reported positions.
+        label: Average Unrealized P&L %
+        type: simple
+        agg: average
+        expr: unrealized_pnl_pct
+
+      - name: reference_match_rate
+        description: Share of current position rows that matched a canonical instrument reference record.
+        label: Reference Match Rate
+        type: ratio
+        numerator: matched_reference_position_count
+        denominator: position_count
+
+      - name: reconciliation_break_rate
+        description: Share of current position rows that remain pending or unmatched in reconciliation.
+        label: Reconciliation Break Rate
+        type: ratio
+        numerator: reconciliation_break_count
+        denominator: position_count
+
+      - name: position_count_change_mom
+        description: Month-over-month change in current position row count by as-of date.
+        label: Position Count Change M/M
+        type: derived
+        expr: current_position_count - previous_position_count
+        input_metrics:
+          - name: position_count
+            alias: current_position_count
+          - name: position_count
+            alias: previous_position_count
+            offset_window: 1 month
+
+      - name: market_value_change_mom
+        description: Month-over-month change in total market value by as-of date.
+        label: Market Value Change M/M
+        type: derived
+        expr: current_market_value - previous_market_value
+        input_metrics:
+          - name: total_market_value
+            alias: current_market_value
+          - name: total_market_value
+            alias: previous_market_value
+            offset_window: 1 month
+
+      - name: market_value_growth_rate_mom
+        description: Month-over-month growth rate in total market value by as-of date.
+        label: Market Value Growth Rate M/M
+        type: derived
+        expr: case when previous_market_value = 0 then null else (current_market_value - previous_market_value) / previous_market_value end
+        input_metrics:
+          - name: total_market_value
+            alias: current_market_value
+          - name: total_market_value
+            alias: previous_market_value
+            offset_window: 1 month
+
+      - name: unrealized_pnl_change_mom
+        description: Month-over-month change in total unrealized profit and loss by as-of date.
+        label: Unrealized P&L Change M/M
+        type: derived
+        expr: current_unrealized_pnl - previous_unrealized_pnl
+        input_metrics:
+          - name: total_unrealized_pnl
+            alias: current_unrealized_pnl
+          - name: total_unrealized_pnl
+            alias: previous_unrealized_pnl
+            offset_window: 1 month
