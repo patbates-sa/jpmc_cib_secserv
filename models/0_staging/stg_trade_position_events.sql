@@ -42,7 +42,7 @@ renamed as (
         position_status,
         reconciliation_status,
         is_cancelled,
-        ingest_batch_id
+        ingest_batch_id as ingest_batch_id
 
     from source
 
