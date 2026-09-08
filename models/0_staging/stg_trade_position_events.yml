@@ -4,7 +4,9 @@ models:
   - name: stg_trade_position_events
     description: Standardized trade and position event records from the SecServ raw position event feed.
     config:
-      materialized: view
+      materialized: table
+      file_format: delta
+
     columns:
       - name: event_id
         description: Unique identifier for the trade or position event record.

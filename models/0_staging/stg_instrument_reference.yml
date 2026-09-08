@@ -4,7 +4,9 @@ models:
   - name: stg_instrument_reference
     description: Canonical instrument reference attributes standardized from the SecServ raw instrument reference feed.
     config:
-      materialized: view
+      materialized: table
+      file_format: delta
+
     columns:
       - name: instrument_id
         description: Stable identifier for the instrument in the SecServ feed.
